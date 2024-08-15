@@ -34,7 +34,9 @@ python app.py
 
 ## Enviar datos
 Para enviar los datos por ip, cambiar la ip local por la pública
-
+    
+    temperature; wind_speed; wind_direction; humidity; precipitation
+    22;110;180;100;500
 ~~~
 curl -X POST -d "data=22;110;180;100;500" http://127.0.0.1:5000/receive
 ~~~

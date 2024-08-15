@@ -1,5 +1,13 @@
 Primero crea tu ambiente de anaconda
 
+~~~
+conda create -n webather python=3.8
+~~~
+
+~~~
+conda activate webather
+~~~
+
 Y una vez dentro de tu ambiente instala los paquetes necesarios
 
 ~~~~
@@ -12,7 +20,7 @@ Luego crear la base de datos
 python create_database.py
 ~~~
 
-Y ppor ultimo activa la web
+Y por ultimo activa la web
 ~~~
 python app.py
 ~~~

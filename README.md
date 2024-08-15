@@ -1,3 +1,8 @@
+## Clona el repositorio
+~~~
+git clone https://github.com/And3rs14/webather.git
+~~~
+
 ## Crear tu ambiente
 Primero crea tu ambiente de anaconda
 

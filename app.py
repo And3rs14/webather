@@ -38,7 +38,7 @@ def receive():
     conn = sqlite3.connect('weather_data.db')
     c = conn.cursor()
     c.execute('''INSERT INTO weather (temperature, wind_speed, wind_direction, humidity, precipitation)
-                 VALUES (?, ?, ?, ?, ?)''', (float(temperature), int(wind_speed), wind_direction, float(humidity), float(precipitation)))
+                 VALUES (?, ?, ?, ?, ?)''', (float(temperature), int(wind_speed), int(wind_direction), float(humidity), float(precipitation)))
     conn.commit()
     conn.close()
     return 'Data received and stored'

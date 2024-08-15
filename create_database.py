@@ -7,7 +7,7 @@ def init_db():
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     temperature REAL,
                     wind_speed INTEGER,
-                    wind_direction TEXT,
+                    wind_direction INTEGER,
                     humidity REAL,
                     precipitation REAL
                 )''')

@@ -125,10 +125,10 @@
                 // Actualizar valores
                 $("#temperature").text(data.temperature + "°C");
                 $("#wind_speed").text(data.wind_speed + " km/h");
-                $("#wind_direction").text(data.wind_direction);
+                $("#wind_direction").text(data.wind_direction + "°"); // Muestra los grados
                 $("#humidity").text(data.humidity + "%");
                 $("#precipitation").text(data.precipitation + " mm");
-
+    
                 // Cambiar ícono de temperatura
                 if (data.temperature <= 0) {
                     $(".temperature .icon").html("&#10052;"); // Icono de nieve
@@ -137,33 +137,16 @@
                 } else {
                     $(".temperature .icon").html("&#9728;"); // Icono de sol/calor
                 }
-
-                // Cambiar ícono de dirección del viento
-                switch (data.wind_direction.toLowerCase()) {
-                    case "norte":
-                        $(".wind-direction .icon").html("&#10149;"); // Flecha hacia arriba
-                        break;
-                    case "sur":
-                        $(".wind-direction .icon").html("&#10149;"); // Flecha hacia abajo
-                        break;
-                    case "este":
-                        $(".wind-direction .icon").html("&#10149;"); // Flecha hacia la derecha
-                        break;
-                    case "oeste":
-                        $(".wind-direction .icon").html("&#10149;"); // Flecha hacia la izquierda
-                        break;
-                    default:
-                        $(".wind-direction .icon").html("&#10149;"); // Flecha diagonal o default
-                }
             });
         }
-
+    
         // Fetch data every 5 seconds
         setInterval(fetchLatestData, 5000);
-
+    
         // Fetch data on page load
         fetchLatestData();
     </script>
+    
 </body>
 
 </html>

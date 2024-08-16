@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather Dashboard</title>
-    <!-- <link rel="stylesheet" href="/static/styles.css"> -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <style>
@@ -15,10 +16,8 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
-        overflow: hidden;
-        position: relative;
-
+        min-height: 100vh;
+        background-color: #f0f0f0;
     }
 
     .background {
@@ -29,15 +28,18 @@
         height: 100%;
         background: url('/static/weather-themed-background.jpg') no-repeat center center fixed;
         background-size: cover;
-        filter: blur(5px);
-        /* Aplica un desenfoque de 5px */
+        /* filter: blur(5px); */
         z-index: -1;
-        /* Mantiene el fondo detrás de las cards */
     }
 
     .dashboard {
         display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
         gap: 20px;
+        padding: 20px;
+        max-width: 1200px;
+        width: 100%;
     }
 
     .card {
@@ -46,7 +48,11 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         padding: 20px;
         text-align: center;
-        width: 150px;
+        width: calc(100% / 3 - 40px);
+        min-width: 150px;
+        max-width: 200px;
+        box-sizing: border-box;
+        transition: all 0.3s ease;
     }
 
     .card h2 {
@@ -70,20 +76,45 @@
         background-color: #ffccbc;
     }
 
-    .wind-speed {
-        background-color: #c5cae9;
+    .humidity {
+        background-color: #dcedc8;
+    }
+
+    .pressure {
+        background-color: #f0f4c3;
+    }
+
+    .altitude {
+        background-color: #ffe0b2;
     }
 
     .wind-direction {
         background-color: #b3e5fc;
     }
 
-    .humidity {
-        background-color: #dcedc8;
+    .wind-speed {
+        background-color: #c5cae9;
     }
 
     .precipitation {
         background-color: #b2ebf2;
+    }
+
+    .soil-humidity {
+        background-color: #ffecb3;
+    }
+
+    /* Media Queries for Responsive Design */
+    @media (max-width: 900px) {
+        .card {
+            width: calc(50% - 40px);
+        }
+    }
+
+    @media (max-width: 600px) {
+        .card {
+            width: calc(100% - 40px);
+        }
     }
 </style>
 
@@ -93,60 +124,82 @@
 
     <div class="dashboard">
         <div class="card temperature">
-            <h2>Temperature</h2>
-            <div class="icon">&#9925;</div>
+            <h2>Temperature (°C)</h2>
+            <div class="icon"><i class="bi bi-thermometer-half"></i></div>
             <div class="value" id="temperature">Loading...</div>
         </div>
-        <div class="card wind-speed">
-            <h2>Wind Speed</h2>
-            <div class="icon">&#127788;</div>
-            <div class="value" id="wind_speed">Loading...</div>
-        </div>
-        <div class="card wind-direction">
-            <h2>Wind Direction</h2>
-            <div class="icon">&#10149;</div>
-            <div class="value" id="wind_direction">Loading...</div>
-        </div>
         <div class="card humidity">
-            <h2>Humidity</h2>
-            <div class="icon">&#128167;</div>
+            <h2>Humidity (%)</h2>
+            <div class="icon"><i class="bi bi-droplet-half"></i></div>
             <div class="value" id="humidity">Loading...</div>
         </div>
+        <div class="card pressure">
+            <h2>Atmospheric Pressure (Pa)</h2>
+            <div class="icon"><i class="bi bi-speedometer2"></i></div> <!-- Icono de barómetro -->
+            <div class="value" id="pressure">Loading...</div>
+        </div>
+        <div class="card altitude">
+            <h2>Altitude (m)</h2>
+            <div class="icon"><i class="bi bi-graph-up"></i></div>
+            <div class="value" id="altitude">Loading...</div>
+        </div>
+        <div class="card wind-direction">
+            <h2>Wind Direction (°)</h2>
+            <div class="icon"><i class="bi bi-compass"></i></div>
+            <div class="value" id="wind_direction">Loading...</div>
+        </div>
+        <div class="card wind-speed">
+            <h2>Wind Speed (kph)</h2>
+            <div class="icon"><i class="bi bi-wind"></i></div>
+            <div class="value" id="wind_speed">Loading...</div>
+        </div>
         <div class="card precipitation">
-            <h2>Precipitation</h2>
-            <div class="icon">&#9730;</div>
+            <h2>Precipitation (mm)</h2>
+            <div class="icon"><i class="bi bi-cloud-rain"></i></div>
             <div class="value" id="precipitation">Loading...</div>
+        </div>
+        <div class="card soil-humidity">
+            <h2>Soil Humidity</h2>
+            <div class="icon"><i class="bi bi-moisture"></i></div>
+            <div class="value" id="soil_humidity">Loading...</div>
         </div>
     </div>
 
     <script>
+        function formatNumberWithComma(number) {
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
         function fetchLatestData() {
             $.getJSON("/latest", function (data) {
                 // Actualizar valores
                 $("#temperature").text(data.temperature + "°C");
-                $("#wind_speed").text(data.wind_speed + " km/h");
-                $("#wind_direction").text(data.wind_direction + "°"); // Muestra los grados
                 $("#humidity").text(data.humidity + "%");
+                $("#pressure").text(formatNumberWithComma(data.pressure) + " Pa");
+                $("#altitude").text(data.altitude + " m");
+                $("#wind_direction").text(data.wind_direction + "°");
+                $("#wind_speed").text(data.wind_speed + " kph");
                 $("#precipitation").text(data.precipitation + " mm");
-    
+                $("#soil_humidity").text(data.soil_humidity);
+
                 // Cambiar ícono de temperatura
                 if (data.temperature <= 0) {
-                    $(".temperature .icon").html("&#10052;"); // Icono de nieve
+                    $(".temperature .icon").html('<i class="bi bi-snow"></i>'); // Icono de nieve
                 } else if (data.temperature > 0 && data.temperature <= 20) {
-                    $(".temperature .icon").html("&#9925;"); // Icono de nublado/frío
+                    $(".temperature .icon").html('<i class="bi bi-cloud-sun"></i>'); // Icono de nublado/frío
                 } else {
-                    $(".temperature .icon").html("&#9728;"); // Icono de sol/calor
+                    $(".temperature .icon").html('<i class="bi bi-brightness-high"></i>'); // Icono de sol/calor
                 }
             });
         }
-    
+
         // Fetch data every 5 seconds
         setInterval(fetchLatestData, 5000);
-    
+
         // Fetch data on page load
         fetchLatestData();
     </script>
-    
+
 </body>
 
 </html>

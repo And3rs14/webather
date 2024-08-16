@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.10.7/dayjs.min.js"></script>
 </head>
 <style>
     body {
@@ -52,11 +53,12 @@
         max-width: 200px;
         box-sizing: border-box;
         transition: all 0.3s ease;
+        cursor: pointer;
     }
 
     .card h2 {
-        font-size: 1.5em; /* Más grande */
-        font-weight: bold; /* En negrita */
+        font-size: 1.5em;
+        font-weight: bold;
         margin-bottom: 10px;
         color: #00796b;
     }
@@ -116,6 +118,27 @@
             width: calc(100% - 40px);
         }
     }
+
+    /* Estilo para el Modal */
+    .modal-header {
+        background-color: #00796b;
+        color: #ffffff;
+    }
+
+    .modal-content {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-body ul {
+        padding-left: 20px;
+    }
+
+    .modal-body ul li {
+        margin-bottom: 10px;
+        font-size: 1.2em;
+        color: #004d40;
+    }
 </style>
 
 <body>
@@ -123,45 +146,65 @@
     <div class="background"></div>
 
     <div class="dashboard">
-        <div class="card temperature">
+        <div class="card temperature" data-variable="temperature">
             <h2>Temperature</h2>
             <div class="icon"><i class="bi bi-thermometer-half"></i></div>
             <div class="value" id="temperature">Loading...</div>
         </div>
-        <div class="card humidity">
+        <div class="card humidity" data-variable="humidity">
             <h2>Humidity</h2>
             <div class="icon"><i class="bi bi-droplet-half"></i></div>
             <div class="value" id="humidity">Loading...</div>
         </div>
-        <div class="card pressure">
+        <div class="card pressure" data-variable="pressure">
             <h2>Atmospheric Pressure</h2>
-            <div class="icon"><i class="bi bi-speedometer2"></i></div> <!-- Icono de barómetro -->
+            <div class="icon"><i class="bi bi-speedometer2"></i></div>
             <div class="value" id="pressure">Loading...</div>
         </div>
-        <div class="card altitude">
+        <div class="card altitude" data-variable="altitude">
             <h2>Altitude</h2>
             <div class="icon"><i class="bi bi-graph-up"></i></div>
             <div class="value" id="altitude">Loading...</div>
         </div>
-        <div class="card wind-direction">
+        <div class="card wind-direction" data-variable="wind_direction">
             <h2>Wind Direction</h2>
             <div class="icon"><i class="bi bi-compass"></i></div>
             <div class="value" id="wind_direction">Loading...</div>
         </div>
-        <div class="card wind-speed">
+        <div class="card wind-speed" data-variable="wind_speed">
             <h2>Wind Speed</h2>
             <div class="icon"><i class="bi bi-wind"></i></div>
             <div class="value" id="wind_speed">Loading...</div>
         </div>
-        <div class="card precipitation">
+        <div class="card precipitation" data-variable="precipitation">
             <h2>Precipitation</h2>
             <div class="icon"><i class="bi bi-cloud-rain"></i></div>
             <div class="value" id="precipitation">Loading...</div>
         </div>
-        <div class="card soil-humidity">
+        <div class="card soil-humidity" data-variable="soil_humidity">
             <h2>Soil Humidity</h2>
             <div class="icon"><i class="bi bi-moisture"></i></div>
             <div class="value" id="soil_humidity">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="dataModal" tabindex="-1" aria-labelledby="dataModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dataModalLabel">Historical Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul id="modalDataList">
+                        <!-- Aquí se agregarán los datos históricos -->
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -170,36 +213,87 @@
             return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
 
+        function getUnit(variable) {
+            switch (variable) {
+                case 'temperature':
+                    return '°C';
+                case 'humidity':
+                    return '%';
+                case 'pressure':
+                    return 'Pa';
+                case 'altitude':
+                    return 'm';
+                case 'wind_direction':
+                    return '°';
+                case 'wind_speed':
+                    return 'kph';
+                case 'precipitation':
+                    return 'mm';
+                case 'soil_humidity':
+                    return ''; // No tiene una unidad específica
+                default:
+                    return '';
+            }
+        }
+
+        function fetchLast10Data(variable) {
+            const unit = getUnit(variable);
+            $.getJSON(`/last10/${variable}`, function (data) {
+                const modalList = $("#modalDataList");
+                modalList.empty();
+                data.forEach(([value, timestamp]) => {
+                    const formattedDate = dayjs(timestamp).format('MMMM D, YYYY h:mm A'); // Formato bonito de fecha
+                    modalList.append(`<li>${value} ${unit} - <small>${formattedDate}</small></li>`);
+                });
+            });
+        }
         function fetchLatestData() {
             $.getJSON("/latest", function (data) {
-                // Actualizar valores
-                $("#temperature").text(data.temperature + "°C");
-                $("#humidity").text(data.humidity + "%");
-                $("#pressure").text(formatNumberWithComma(data.pressure) + " Pa");
-                $("#altitude").text(data.altitude + " m");
-                $("#wind_direction").text(data.wind_direction + "°");
-                $("#wind_speed").text(data.wind_speed + " kph");
-                $("#precipitation").text(data.precipitation + " mm");
-                $("#soil_humidity").text(data.soil_humidity);
-
-                // Cambiar ícono de temperatura
-                if (data.temperature <= 0) {
-                    $(".temperature .icon").html('<i class="bi bi-snow"></i>'); // Icono de nieve
-                } else if (data.temperature > 0 && data.temperature <= 20) {
-                    $(".temperature .icon").html('<i class="bi bi-cloud-sun"></i>'); // Icono de nublado/frío
-                } else {
-                    $(".temperature .icon").html('<i class="bi bi-brightness-high"></i>'); // Icono de sol/calor
+                console.log(data);  // Verificar lo que devuelve la ruta /latest
+                if (data.temperature !== "N/A") {
+                    $("#temperature").text(data.temperature + "°C");
+                }
+                if (data.humidity !== "N/A") {
+                    $("#humidity").text(data.humidity + "%");
+                }
+                if (data.pressure !== "N/A") {
+                    $("#pressure").text(formatNumberWithComma(data.pressure) + " Pa");
+                }
+                if (data.altitude !== "N/A") {
+                    $("#altitude").text(data.altitude + " m");
+                }
+                if (data.wind_direction !== "N/A") {
+                    $("#wind_direction").text(data.wind_direction + "°");
+                }
+                if (data.wind_speed !== "N/A") {
+                    $("#wind_speed").text(data.wind_speed + " kph");
+                }
+                if (data.precipitation !== "N/A") {
+                    $("#precipitation").text(data.precipitation + " mm");
+                }
+                if (data.soil_humidity !== "N/A") {
+                    $("#soil_humidity").text(data.soil_humidity);
                 }
             });
         }
 
-        // Fetch data every 5 seconds
-        setInterval(fetchLatestData, 5000);
+        $(document).ready(function () {
+            $(".card").click(function () {
+                const variable = $(this).data("variable");
+                fetchLast10Data(variable);
+                $("#dataModalLabel").text(`${variable.charAt(0).toUpperCase() + variable.slice(1)} Historical Data`);
+                $("#dataModal").modal("show");
+            });
 
-        // Fetch data on page load
-        fetchLatestData();
+            // Fetch data every 5 seconds
+            setInterval(fetchLatestData, 5000);
+
+            // Fetch data on page load
+            fetchLatestData();
+        });
     </script>
-
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 </body>
 
 </html>

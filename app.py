@@ -13,10 +13,13 @@ def get_latest_data():
     conn.close()
     return data
 
-def get_last_10_data(variable):
+def get_last_n_data(variable, limit):
     conn = sqlite3.connect('weather_data.db')
     c = conn.cursor()
-    c.execute(f'''SELECT {variable}, timestamp FROM weather ORDER BY id DESC LIMIT 10''')
+    if limit == 'all':
+        c.execute(f'SELECT {variable}, timestamp FROM weather ORDER BY id DESC')
+    else:
+        c.execute(f'SELECT {variable}, timestamp FROM weather ORDER BY id DESC LIMIT {limit}')
     data = c.fetchall()
     conn.close()
     return data
@@ -46,9 +49,9 @@ def latest():
         "timestamp": timestamp
     })
 
-@app.route('/last10/<variable>', methods=['GET'])
-def last_10(variable):
-    data = get_last_10_data(variable)
+@app.route('/last<limit>/<variable>', methods=['GET'])
+def last_n(variable, limit):
+    data = get_last_n_data(variable, limit)
     return jsonify(data)
 
 @app.route('/receive', methods=['POST'])

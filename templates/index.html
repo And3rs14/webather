@@ -9,6 +9,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.10.7/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
 </head>
 <style>
     body {
@@ -190,18 +192,23 @@
 
     <!-- Modal -->
     <div class="modal fade" id="dataModal" tabindex="-1" aria-labelledby="dataModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="dataModalLabel">Historical Data</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <ul id="modalDataList">
-                        <!-- Aquí se agregarán los datos históricos -->
-                    </ul>
+                    <canvas id="dataChart"></canvas> <!-- Contenedor para el gráfico -->
                 </div>
                 <div class="modal-footer">
+                    <select id="dataPointsSelector" class="form-select">
+                        <option value="10">Last 10</option>
+                        <option value="20">Last 20</option>
+                        <option value="50">Last 50</option>
+                        <option value="100">Last 100</option>
+                        <option value="all">All Data</option>
+                    </select>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -209,9 +216,8 @@
     </div>
 
     <script>
-        function formatNumberWithComma(number) {
-            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        }
+        let chart; // Variable global para almacenar la referencia al gráfico
+        let currentVariable = ""; // Variable global para almacenar la variable actual seleccionada
 
         function getUnit(variable) {
             switch (variable) {
@@ -236,20 +242,12 @@
             }
         }
 
-        function fetchLast10Data(variable) {
-            const unit = getUnit(variable);
-            $.getJSON(`/last10/${variable}`, function (data) {
-                const modalList = $("#modalDataList");
-                modalList.empty();
-                data.forEach(([value, timestamp]) => {
-                    const formattedDate = dayjs(timestamp).format('MMMM D, YYYY h:mm A'); // Formato bonito de fecha
-                    modalList.append(`<li>${value} ${unit} - <small>${formattedDate}</small></li>`);
-                });
-            });
+        function formatNumberWithComma(number) {
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
+
         function fetchLatestData() {
             $.getJSON("/latest", function (data) {
-                console.log(data);  // Verificar lo que devuelve la ruta /latest
                 if (data.temperature !== "N/A") {
                     $("#temperature").text(data.temperature + "°C");
                 }
@@ -277,12 +275,82 @@
             });
         }
 
+        function createChart(data, labels, unit) {
+            const ctx = document.getElementById('dataChart').getContext('2d');
+            if (chart) {
+                chart.destroy(); // Asegurarse de destruir el gráfico anterior antes de crear uno nuevo
+            }
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Value (${unit})`,
+                        data: data,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                tooltipFormat: 'MMM d, yyyy h:mm a',  // 'a' en minúscula
+                                displayFormats: {
+                                    minute: 'h:mm a',  // 'a' en minúscula
+                                    hour: 'MMM d, h:mm a'  // 'a' en minúscula
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: `Value (${unit})`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        function fetchDataAndRenderChart(variable, limit = 10) {
+            const unit = getUnit(variable);
+            $.getJSON(`/last${limit}/${variable}`, function (data) {
+                const values = data.map(item => item[0]);
+                const timestamps = data.map(item => item[1]);
+
+                createChart(values, timestamps, unit);
+            }).fail(function (jqxhr, textStatus, error) {
+                console.error("Error fetching data:", textStatus, error);
+            });
+        }
+
         $(document).ready(function () {
             $(".card").click(function () {
-                const variable = $(this).data("variable");
-                fetchLast10Data(variable);
-                $("#dataModalLabel").text(`${variable.charAt(0).toUpperCase() + variable.slice(1)} Historical Data`);
+                currentVariable = $(this).data("variable"); // Almacenar la variable actual seleccionada
+                fetchDataAndRenderChart(currentVariable); // Cargar los 10 últimos datos por defecto
+                $("#dataModalLabel").text(`${currentVariable.charAt(0).toUpperCase() + currentVariable.slice(1)} Historical Data`);
                 $("#dataModal").modal("show");
+            });
+
+            $("#dataPointsSelector").change(function () {
+                const limit = $(this).val();
+                if (currentVariable) {
+                    fetchDataAndRenderChart(currentVariable, limit);
+                }
+            });
+
+            // Resetear el selector al valor por defecto (Last 10) al cerrar el modal
+            $('#dataModal').on('hidden.bs.modal', function () {
+                $("#dataPointsSelector").val('10'); // Restablecer el valor del selector
             });
 
             // Fetch data every 5 seconds
@@ -292,6 +360,7 @@
             fetchLatestData();
         });
     </script>
+
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 </body>

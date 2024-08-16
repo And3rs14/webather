@@ -5,11 +5,14 @@ def init_db():
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS weather (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    temperature REAL,
-                    wind_speed INTEGER,
-                    wind_direction INTEGER,
-                    humidity REAL,
-                    precipitation REAL
+                    temperature REAL,              -- Grados Celsius (°C)
+                    humidity REAL,                 -- Porcentaje de humedad relativa (%)
+                    pressure REAL,                 -- Pascales (Pa)
+                    altitude REAL,                 -- Metros
+                    wind_direction INTEGER,        -- Grados (°)
+                    wind_speed REAL,               -- Kilómetros por hora (kph)
+                    precipitation REAL,            -- Milímetros (mm)
+                    soil_humidity REAL             -- Valor analógico sin unidad específica
                 )''')
     conn.commit()
     conn.close()

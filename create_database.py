@@ -3,16 +3,18 @@ import sqlite3
 def init_db():
     conn = sqlite3.connect('weather_data.db')
     c = conn.cursor()
+    # Añadir la columna timestamp a la tabla weather
     c.execute('''CREATE TABLE IF NOT EXISTS weather (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    temperature REAL,              -- Grados Celsius (°C)
-                    humidity REAL,                 -- Porcentaje de humedad relativa (%)
-                    pressure REAL,                 -- Pascales (Pa)
-                    altitude REAL,                 -- Metros
-                    wind_direction INTEGER,        -- Grados (°)
-                    wind_speed REAL,               -- Kilómetros por hora (kph)
-                    precipitation REAL,            -- Milímetros (mm)
-                    soil_humidity REAL             -- Valor analógico sin unidad específica
+                    temperature REAL,
+                    humidity REAL,
+                    pressure REAL,
+                    altitude REAL,
+                    wind_direction REAL,
+                    wind_speed REAL,
+                    precipitation REAL,
+                    soil_humidity REAL,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )''')
     conn.commit()
     conn.close()
